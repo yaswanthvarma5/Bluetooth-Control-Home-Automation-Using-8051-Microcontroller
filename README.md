@@ -1,138 +1,148 @@
-Here is a comprehensive, production-ready `README.md` for your GitHub repository based on your project source files:
-
-```markdown
-# 🏡 Bluetooth Controlled Home Automation System Using 8051
-
-A micro-controller-based home automation project built around the **8051 architecture (AT89C51 / P89V51RD2)**[cite: 1]. This system enables wireless switching of home appliances (like lamps and fans) via an Android smartphone using **HC-05 Bluetooth module** serial communication[cite: 1].
-
----
-
-## 📌 Features
-
-* **Wireless Appliance Control:** Turn home appliances ON and OFF remotely via an Android app using Bluetooth[cite: 1].
-* **Relay Isolation:** Uses a multi-channel relay module driven by a **ULN2003A** IC to safely interface low-voltage MCU digital signals with high-voltage AC electrical loads[cite: 1].
-* **UART Serial Protocol:** Communicates seamlessly over RS-232 serial logic at a 9600 baud rate[cite: 1].
-* **Instant Feedback:** Sends real-time status strings (e.g., `Lamp_ON`, `Fan_OFF`) back to the connected Bluetooth terminal app[cite: 1].
-
----
-
-## 📐 Block Diagram & System Architecture
-
-
+Bluetooth Controlled Home Automation Using 8051 Microcontroller
+A simple embedded-systems project that lets a user control home appliances from an Android smartphone over Bluetooth. An HC-05 Bluetooth module receives commands from the phone and passes them to an 8051-family microcontroller through UART serial communication. The microcontroller controls the lamp and fan outputs.
+Features
+Wireless control from an Android phone over Bluetooth
+8051 microcontroller-based control logic
+HC-05 Bluetooth serial communication
+UART transmit and receive routines
+Separate commands for lamp and fan control
+Text status response for each recognized command
+Block Diagram
+GitHub supports Mermaid diagrams, so this diagram should render directly in the repository README.
+```mermaid
+flowchart LR
+    A[Android Smartphone<br/>Bluetooth Control App] <-->|Bluetooth| B[HC-05 Bluetooth Module]
+    B <-->|UART Serial TX/RX| C[8051 Microcontroller]
+    C -->|P2.0 control| D[Relay Driver / Relay 1]
+    C -->|P2.1 control| E[Relay Driver / Relay 2]
+    D --> F[Lamp]
+    E --> G[Fan]
+    H[Regulated Power Supply] -.-> B
+    H -.-> C
+    H -.-> D
+    H -.-> E
 ```
-
-+------------------+         +--------------------+         +---------------+         +--------------+
-| Android Phone    | Bluetooth| HC-05 Module       | Serial  | 8051 Micro    | Digital | Relay Driver |
-| (App Controller) |-------->|(RX/TX @ 9600 Baud) |-------->| (AT89C51)     |-------->| (ULN2003A &  |
-+------------------+         +--------------------+ (P3.0/1)|               | (Port 2)| Relays)      |
-+----------------+         +-------+------+
-|
-+------+------+
-| AC Loads    |
-| (Fan, Light)|
-+-------------+
-
+Signal flow: The Android app sends a command to the HC-05. The module forwards it to the 8051 using UART. The microcontroller checks the command and changes the lamp or fan control output. A status string is sent back over the serial connection.
+> The diagram is a functional block diagram, not a detailed wiring schematic. Confirm your exact development-board and relay-module connections before building the circuit.
+Command / Program Flowchart
+```mermaid
+flowchart TD
+    A([Start]) --> B[Initialize UART]
+    B --> C[Set initial output states]
+    C --> D[Wait for Bluetooth command]
+    D --> E{Which command?}
+    E -->|1| F[Set lamp output ON]
+    E -->|2| G[Set lamp output OFF]
+    E -->|3| H[Set fan output ON]
+    E -->|4| I[Set fan output OFF]
+    E -->|Other| J[Send invalid-command message]
+    F --> K[Send status message]
+    G --> K
+    H --> K
+    I --> K
+    K --> D
+    J --> D
 ```
+Hardware Requirements
+8051-family microcontroller development board
+HC-05 Bluetooth module
+Relay driver / relay module suitable for the intended loads
+Lamp and fan, or low-voltage demonstration loads
+Regulated power supply suitable for the board and modules
+Jumper wires and connecting wires
+Android smartphone with a Bluetooth serial-control app
+> **Electrical safety:** Never connect a mains-powered appliance directly to a microcontroller pin or bare relay. Use a properly rated, isolated relay module and a safe enclosure. For mains wiring, use a qualified person. For development and testing, low-voltage loads are safer.
+Software Requirements
+Keil µVision / C51 — compile the 8051 C source
+Nuvoton ISP-ICP Utility — if required by your specific Nuvoton board
+Android Bluetooth control app — send serial characters from the phone
+HyperTerminal or another serial terminal — optional debugging tool
+How It Works
+Pair the Android phone with the HC-05 module. The presentation lists common default PINs as `1234` or `0000`; the actual PIN may differ.
+The app sends a single-character command over Bluetooth.
+The HC-05 forwards the character to the microcontroller through UART.
+The 8051 program reads the character and updates the relevant output.
+The program sends a status string back over UART.
+Bluetooth Commands
+Command	Intended action	Status text
+`1`	Lamp ON	`Lamp_ON`
+`2`	Lamp OFF	`Lamp_OFF`
+`3`	Fan ON	`Fan_ON`
+`4`	Fan OFF	`Fan_OFF`
+Any other character	No appliance action	`Select proper option`
+The presentation's code sets the output pins to logic `1` for the ON commands and logic `0` for the OFF commands. Relay boards can be active-low or active-high, so verify your relay module and adjust the logic for your actual hardware.
+Pin / Interface Summary
+Signal	Pin / connection
+Lamp control	P2.0
+Fan control	P2.1
+8051 UART receive	P3.0 / RXD on a standard 8051
+8051 UART transmit	P3.1 / TXD on a standard 8051
+HC-05 serial link	Cross-connect module TX to MCU RX and module RX to MCU TX
+Ground	Use a common ground where required by the board/module design
+Important: The presentation's code comment appears to label the UART pins in the opposite order. On a standard 8051, P3.0 is RXD and P3.1 is TXD. Confirm the pinout for your exact board and check voltage-level compatibility before wiring.
+Connection Overview
+```text
+Android phone
+     )) Bluetooth ((
+   HC-05 module
+     TX  ------------>  8051 P3.0 / RXD
+     RX  <------------  8051 P3.1 / TXD
+                         |
+                         | P2.0
+                         v
+                  Relay driver 1 ---> Lamp
 
----
-
-## 🛠️ Hardware Components
-
-| Component | Description / Part Number |
-| :--- | :--- |
-| **Microcontroller** | 8051 Family (AT89C51 / P89V51RD2 / PS-8051-EVB-V4 Board)[cite: 1] |
-| **Bluetooth Module** | HC-05 Serial Module (IEEE 802.15.1)[cite: 1] |
-| **Relay Driver** | ULN2003A Darlington Transistor Array[cite: 1] |
-| **Relays** | 5V DC Relays (AC load switching)[cite: 1] |
-| **Power Supply** | 12V DC input with LM7805 Voltage Regulator (5V output)[cite: 1] |
-| **Crystal Oscillator** | 11.0592 MHz (Standard UART baud rate generation)[cite: 1] |
-| **Loads** | AC Fan, Lamp / Bulb[cite: 1] |
-
----
-
-## 💻 Software & Tools
-
-* **Keil µVision C51:** Embedded C IDE and compiler[cite: 1].
-* **Nuvoton / Flash Magic ISP Utility:** ISP hex flashing tool[cite: 1].
-* **HyperTerminal / Serial Monitor:** Testing UART serial communication[cite: 1].
-* **Android Bluetooth Terminal App:** Available on Google Play Store[cite: 1].
-
----
-
-## 📶 HC-05 Bluetooth Module Configuration
-
-* **Default Bluetooth Name:** `HC-05`[cite: 1]
-* **Default Passkey/PIN:** `1234` or `0000`[cite: 1]
-* **Baud Rate (Data Mode):** `9600, 8, N, 1`[cite: 1]
-* **Command Mode Baud Rate:** `38400, 8, N, 1`[cite: 1]
-* **Operating Mode:** Slave Mode[cite: 1]
-
----
-
-## 🔄 Command Control Protocol
-
-| Received Character | Microcontroller Action | Pin Output State | Response String Sent |
-| :---: | :--- | :---: | :---: |
-| `'1'` | Turn Lamp ON | `P2^0 = 1` | `"Lamp_ON"` |
-| `'2'` | Turn Lamp OFF | `P2^0 = 0` | `"Lamp_OFF"` |
-| `'3'` | Turn Fan ON | `P2^1 = 1` | `"Fan_ON"` |
-| `'4'` | Turn Fan OFF | `P2^1 = 0` | `"Fan_OFF"` |
-
----
-
-## ⚡ Circuit Connections
-
-1. **Bluetooth HC-05 Module:**
-   * `TXD` $\rightarrow$ 8051 `P3.0` (RXD)[cite: 1]
-   * `RXD` $\rightarrow$ 8051 `P3.1` (TXD)[cite: 1]
-   * `VCC` $\rightarrow$ `+5V`
-   * `GND` $\rightarrow$ `GND`
-2. **Relay Driver (ULN2003A & Relays):**
-   * Inputs $\rightarrow$ 8051 `P2.0` (Lamp) & `P2.1` (Fan)[cite: 1]
-   * Outputs $\rightarrow$ Relay Coil Terminals[cite: 1]
-   * Relay Contacts $\rightarrow$ Connected in series with 220V AC Power source and appliances[cite: 1]
-
----
-
-## 📁 Repository Structure
-
-
+                         | P2.1
+                         v
+                  Relay driver 2 ---> Fan
 ```
-
-├── HOME/
-│   ├── HOME.c                 # Main Embedded C Source Code
-│   ├── HOME.uvproj            # Keil µVision Project File
-│   ├── HOME.uvopt             # Keil Project Options
-│   ├── Objects/
-│   │   ├── HOME.hex           # Compiled Binary Executable Hex File
-│   │   └── HOME.obj           # Object File
-│   └── Listings/
-│       ├── HOME.m51           # Linker Map File
-│       └── HOME.lst           # Compiler Listing File
-└── README.md                  # Documentation File
-
+This is a simplified signal overview, not a complete circuit schematic. Power, ground, relay-driver inputs, isolation, and load wiring depend on the specific modules being used.
+Setup
+Assemble the circuit using the documentation for your exact microcontroller board, HC-05 module, and relay module.
+Open the 8051 C source in Keil µVision.
+Confirm the MCU model, oscillator frequency, UART baud rate, output polarity, and pin mapping.
+Compile the program and resolve any compiler errors.
+Program the microcontroller using the tool supported by your board.
+Power the circuit and pair the phone with `HC-05`.
+Open a Bluetooth serial-control app and connect to the paired module.
+Send `1`, `2`, `3`, or `4` and check the response.
+Test using low-voltage loads before connecting any actual household appliance.
+Code Overview
+The C program shown in the project presentation uses:
+`UART_Init()` — configures the serial port and Timer 1
+`UART_TxChar()` — transmits one character
+`UART_RxChar()` — receives one character
+`UART_SendString()` — transmits a status message
+`main()` — continuously receives commands and controls the lamp/fan outputs
+The code uses `#include <reg51.h>` and declares the outputs as `sbit Lamp = P2^0;` and `sbit Fan = P2^1;`. The presentation shows `TH1 = 0xFD`, commonly used for 9600 baud with a suitable 8051 clock configuration; verify the clock and baud-rate settings for your hardware.
+Troubleshooting
+Phone cannot connect: Check that the HC-05 is powered, paired, and not connected to another device.
+Commands do not work: Check TX/RX crossover, baud rate, ground, and voltage-level requirements.
+Lamp/fan state is reversed: Check whether the relay module is active-low or active-high.
+Serial text is garbled: Confirm the MCU clock and UART baud rate match the Bluetooth serial settings.
+Programming fails: Confirm the MCU model and use the programming utility supported by the development board.
+Suggested Repository Structure
+```text
+Bluetooth-Home-Automation-8051/
+├── README.md
+├── src/
+│   └── home_automation.c
+├── diagrams/
+│   ├── block-diagram.png
+│   ├── flowchart.png
+│   └── circuit-diagram.png
+└── docs/
+    └── project-presentation.pptx
 ```
-
----
-
-## 🚀 How to Build & Run
-
-1. **Compile Code:**
-   * Open `HOME/HOME.uvproj` using **Keil µVision**[cite: 1].
-   * Build the project (`F7`) to output the `HOME.hex` file located in the `Objects/` folder[cite: 1].
-2. **Burn Hex File:**
-   * Connect your 8051 development board to your PC via USB-to-UART / Serial connector[cite: 1].
-   * Open your ISP Flashing Utility (e.g., Nuvoton ISP / Flash Magic) and flash `HOME.hex` into microcontroller memory[cite: 1].
-3. **Hardware Setup:**
-   * Connect the HC-05 Bluetooth module and relay circuits according to the schematic[cite: 1].
-   * Power on the 8051 board[cite: 1].
-4. **App Connection:**
-   * Enable Bluetooth on your Android phone and pair with **HC-05** using PIN `1234` or `0000`[cite: 1].
-   * Open any Bluetooth Terminal app from the Google Play Store, connect to `HC-05`, and send commands `1`, `2`, `3`, or `4`[cite: 1].
-
----
-
-## 📜 License
-This project is open-source and free to use under the MIT License.
-
-```
+The folder names above are suggestions. Add only files you actually have. Mermaid diagrams in this README do not require separate image files.
+Limitations
+This project provides local Bluetooth control; it does not provide Wi-Fi or internet-based remote access.
+The presentation does not specify every board model, circuit connection, or relay-driver detail. Confirm these against the actual hardware.
+The code shown in the presentation may need syntax cleanup and hardware-specific changes before it compiles and runs.
+Future Improvements
+Add appliance-state sensing so the status reflects the actual load state.
+Add more output channels for additional appliances.
+Improve command validation and add error handling.
+Include tested source code, real circuit photographs, and a detailed schematic.
+License
+Choose a license before publishing the project publicly. If you want others to reuse and modify the code, consider adding a license file such as MIT after confirming you have the right to license all included material.
